@@ -46,7 +46,7 @@ Currently only the following languages are supported for syntax highlighting:
 - Rust
 - TypeScript
 
-To add language support, read the new language support guide and submit a pull request.
+To add language support, submit a pull request.
 
 ### Unintelligent Highlighting
 
