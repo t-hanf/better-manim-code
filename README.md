@@ -54,4 +54,4 @@ To add language support, submit a pull request to to the [Tokenize-All](https://
 
 ### Lack of Themes
 
-Currently the only theme supported out of the box is the [One Dark Pro](https://github.com/Binaryify/OneDark-Pro) theme from Atom and used in Visual Studio Code. Adding a custom theme is possible and even simple; However currently this is the only theme supported out of the box.
+Currently the only theme supported out of the box is the [One Dark Pro](https://github.com/Binaryify/OneDark-Pro) theme from Atom and used in Visual Studio Code. Adding a custom theme is possible (and simple), however currently this is the only theme supported out of the box.
