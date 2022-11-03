@@ -50,7 +50,7 @@ To add language support, submit a pull request to to the [Tokenize-All](https://
 
 ### Unintelligent Highlighting
 
-`Manim-Code-Block` uses *syntax* highlighting, not *semantic* highlighting. The source code is only tokenized, not parsed, and as such accurate highlighting can be impossible for certain circumstances. Syntax highlighting is provided by the [Tokenize-All](https://github.com/NicholasIapalucci/Tokenize-All) module, which lacks thorough language support. Additionally many languages have not been thoroughly tested enough for accurate hilighting. If you find an issue in your syntax highlighting, please report it to [the issues thread](https://github.com/NicholasIapalucci/manim-code-blocks/issues).
+`Manim-Code-Block` uses *syntax* highlighting, not *semantic* highlighting. The source code is only tokenized, not parsed, and as such accurate highlighting can be impossible for certain circumstances. Syntax highlighting is provided by the [Tokenize-All](https://github.com/NicholasIapalucci/Tokenize-All) module, which lacks thorough language support. Additionally many languages have not been thoroughly tested enough for accurate highlighting. If you find an issue in your syntax highlighting, please report it to [the issues thread](https://github.com/NicholasIapalucci/manim-code-blocks/issues).
 
 ### Lack of Themes
 
