@@ -6,7 +6,6 @@ import re as regex
 from abc import ABC as abstract
 from urllib.request import urlopen
 
-
 class Theme:
     """A theme used to syntax highlight a `CodeBlock`."""
     
@@ -15,11 +14,14 @@ class Theme:
     The colors of this theme represented as a dictionary. The keys of the dictionary are hexidecimal colors (such as `"#FFFFFF"`), and the values are lists of token types that should be colored with that color (such as `["keyword", "operation"]`).
     """
 
-    def __init__(self, colors: dict[str, list[str]]):
+    group_matchers: list[str]
+
+    def __init__(self, colors: dict[str, list[str]], group_matchers: list[str]):
         """
         Creates a new `Theme` with the specified `colors`. See the `colors` field for specification.
         """
         self.colors = colors
+        self.group_matchers = group_matchers
 
     def color_for(self, token: tokenize_all.Token) -> str:
         """Returns the color for the given token as specified by this theme, or `"#FFFFFF"` if none is specified."""
@@ -31,15 +33,21 @@ class Theme:
 
 OneDark = Theme(
     colors = {
-        "#C678DD": ["keyword"],
-        "#61AFEF": ["function"],
-        "#E06C75": ["identifier"],
-        "#98C379": ["string"],
-        "#56B6C2": [],
-        "#D19A66": ["number", "keyword literal"],
-        "#E5C07B": ["class name"],
-        GRAY_C: ["comment"]
-    }
+        "#C678DD": ["keyword"], # Purple
+        "#61AFEF": ["function"], # Blue
+        "#E06C75": ["identifier"], # Red
+        "#98C379": ["string"], # Green
+        "#56B6C2": [], # Cyan
+        "#D19A66": ["number", "keyword literal"], # Orange
+        "#E5C07B": ["class name"], # Yellow
+        GRAY_C: ["comment"] # Gray
+    },
+
+    group_matchers = [
+        "#D19A66", # Orange
+        "#C678DD", # Purple
+        "#56B6C2" # Cyan
+    ]
 )
 """The 'One Dark' theme from the `Atom` text editor."""
 
@@ -119,14 +127,20 @@ class CodeBlock(VGroup):
         """
 
         lines = text.split("\n")
+        group_count = 0
         finished = []
         for line in lines:
             tokens = language.language.tokenize(line)
             for token in tokens:
-                if token.type == "whitespace": finished.append(token.value)
+                if token.type.startswith('left'):
+                    finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
+                    group_count += 1
+                elif token.type.startswith('right'):
+                    group_count -= 1
+                    finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
+                elif token.type == "whitespace": finished.append(token.value)
                 else: finished.append('<span foreground="' + theme.color_for(token = token) + '">' + token.value + '</span>')
             finished.append("\r")
-        for line in finished: print(line)
         finished_text = "".join(finished)
         finished_text = regex.sub("&", "&amp;", finished_text)
 
