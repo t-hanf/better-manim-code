@@ -37,7 +37,7 @@ OneDark = Theme(
         "#61AFEF": ["function"], # Blue
         "#E06C75": ["identifier"], # Red
         "#98C379": ["string"], # Green
-        "#56B6C2": [], # Cyan
+        "#56B6C2": ["symbol"], # Cyan
         "#D19A66": ["number", "keyword literal"], # Orange
         "#E5C07B": ["class name"], # Yellow
         GRAY_C: ["comment"] # Gray
@@ -72,7 +72,7 @@ class ProgrammingLanguage(abstract):
     The `TokenizableLanguage` of the language. 
     """
 
-    def __init__(self, name, tokenize_name = None):
+    def __init__(self, name: str, tokenize_name: str | None = None):
         self.name = name
         self.language = getattr(tokenize_all, tokenize_name if tokenize_name else name)
         self.color = language_colors[name]["color"]
@@ -105,7 +105,7 @@ class CodeBlock(VGroup):
     def __init__(
             self, 
             text: str, 
-            language: ProgrammingLanguage, 
+            language: ProgrammingLanguage | None = None, 
             theme: Theme = OneDark,
             font: str = "consolas",
             **kwargs: object
@@ -126,23 +126,29 @@ class CodeBlock(VGroup):
             - Additional arguments passed to `VGroup`.
         """
 
-        lines = text.split("\n")
-        group_count = 0
-        finished = []
-        for line in lines:
-            tokens = language.language.tokenize(line)
-            for token in tokens:
-                if token.type.startswith('left'):
-                    finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
-                    group_count += 1
-                elif token.type.startswith('right'):
-                    group_count -= 1
-                    finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
-                elif token.type == "whitespace": finished.append(token.value)
-                else: finished.append('<span foreground="' + theme.color_for(token = token) + '">' + token.value + '</span>')
-            finished.append("\r")
-        finished_text = "".join(finished)
-        finished_text = regex.sub("&", "&amp;", finished_text)
+        if language:
+            lines = text.split("\n")
+            group_count = 0
+            finished: list[str] = []
+            for line in lines:
+                tokens = language.language.tokenize(line)
+                for token in tokens:
+                    if token.type.startswith('left'):
+                        finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
+                        group_count += 1
+                    elif token.type.startswith('right'):
+                        group_count -= 1
+                        finished.append('<span foreground="' + theme.group_matchers[group_count % len(theme.group_matchers)] + '">' + token.value + '</span>')
+                    elif token.type == "whitespace": finished.append(token.value)
+                    else: finished.append('<span foreground="' + theme.color_for(token = token) + '">' + token.value + '</span>')
+                finished.append("\r")
+
+            finished_text = "".join(finished)
+            finished_text = regex.sub("&", "&amp;", finished_text)
+            finished_text = regex.sub("><<", ">&lt;<", finished_text)
+            finished_text = regex.sub(">><", ">&gt;<", finished_text)
+        else:
+            finished_text = '<span foreground="#FFFFFF">' + text + "</span>"
 
         markup = MarkupText(f'<span font="{font}">' + finished_text + '</span>', z_index = 3).scale(0.4)
         background_rect = BackgroundRectangle(
@@ -152,22 +158,29 @@ class CodeBlock(VGroup):
             fill_opacity = 1
         )
 
-        lang_name = MarkupText(
-            f'<span font="{font}">{language.name}</span>',
-             z_index = 3
-        ).next_to(background_rect, UP).set_color(language.color)
-        lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
+        if language:
+            lang_name = MarkupText(
+                f'<span font="{font}">{language.name}</span>',
+                z_index = 3
+            ).next_to(background_rect, UP).set_color(language.color)
+            lang_name.scale(0.3, about_point=lang_name.get_corner(DOWN + LEFT))
 
-        lang_background = BackgroundRectangle(lang_name, color="#282C34", buff=0.15, fill_opacity=1)
-        pos = background_rect.get_corner(UP + LEFT) + np.array([lang_background.width/2, lang_background.height/2 - 0.005, 0])
+            lang_background = BackgroundRectangle(lang_name, color="#282C34", buff=0.15, fill_opacity=1)
+            pos = background_rect.get_corner(UP + LEFT) + np.array([lang_background.width/2, lang_background.height/2 - 0.005, 0])
 
-        VGroup(lang_name, lang_background).move_to(pos)
-        super().__init__(background_rect, markup, lang_background, lang_name, **kwargs)
+            VGroup(lang_name, lang_background).move_to(pos)
+
+            self.code_background = background_rect
+            self.title_background = lang_background
+
+            super().__init__(background_rect, markup, lang_background, lang_name, **kwargs)
+        else: 
+            self.title = None
+            self.title_background = None
+            super().__init__(background_rect, markup, **kwargs)
 
         self.code = markup
-        self.title = lang_name
         self.code_background = background_rect
-        self.title_background = lang_background
 
     def create(self, **kwargs) -> tuple[FadeIn, AddTextLetterByLetter, FadeIn, AddTextLetterByLetter]:
         """
@@ -178,11 +191,16 @@ class CodeBlock(VGroup):
         ```
         By default the animation will `FadeIn` the `background` and `title_background`, and `AddTextLetterByLetter` the `code` and `title`. 
         """
-        return (
+        if getattr(self, 'title', None) and getattr(self, 'title_background', None): return (
             FadeIn(self.code_background, **kwargs), 
             AddTextLetterByLetter(self.code, **kwargs), 
             FadeIn(self.title_background, **kwargs), 
             AddTextLetterByLetter(self.title, **kwargs)
+        )
+
+        return (
+            FadeIn(self.code_background, **kwargs), 
+            AddTextLetterByLetter(self.code, **kwargs), 
         )
 
     def uncreate(self, **kwargs):
@@ -194,11 +212,16 @@ class CodeBlock(VGroup):
         ```
         By default the animation will `FadeOut` the `background` and `title_background`, and `Uncreate` the `code` and `title`. 
         """
-        return (
+        if getattr(self, 'title', None) and getattr(self, 'title_background', None): return (
             FadeOut(self.code_background, **kwargs), 
             Uncreate(self.code, **kwargs), 
             FadeOut(self.title_background, **kwargs), 
             Uncreate(self.title, **kwargs)
+        )
+
+        return (
+            FadeOut(self.code_background, **kwargs), 
+            Uncreate(self.code, **kwargs), 
         )
 
 
