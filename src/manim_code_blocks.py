@@ -172,6 +172,7 @@ class CodeBlock(VGroup):
 
             self.code_background = background_rect
             self.title_background = lang_background
+            self.title = lang_name
 
             super().__init__(background_rect, markup, lang_background, lang_name, **kwargs)
         else: 
